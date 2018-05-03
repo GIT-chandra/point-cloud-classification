@@ -2,9 +2,10 @@ import tensorflow as tf
 import numpy as np
 import layers as L
 from prep_data import knn_K
+import matplotlib.pyplot as plt
 
-CONFIG = {'num_classes': 10, 'batch_size_train': 32, 'batch_size_eval':32,\
- 'knn_K': knn_K, 'num_epochs':200, 'size_train':3991, 'size_eval':908 }
+CONFIG = {'num_classes': 10, 'batch_size_train': 32, 'batch_size_eval':4,\
+ 'knn_K': knn_K, 'num_epochs':80, 'size_train':3991, 'size_eval':908 }
 
 TRAIN_FILE_LIST = 'mn10train.txt'
 EVAL_FILE_LIST = 'mn10eval.txt'
@@ -21,41 +22,59 @@ CAT_DICT = {'bathtub':0,
 
 CATEGORIES = ['bathtub','bed','chair','desk','dresser','monitor','night_stand','sofa','table','toilet']
 
+class training_data(object):
+    def __init__(self):
+        self.train_losses = []
+        self.train_accs = []
+        self.val_losses = []
+        self.val_accs = []
+
+    def plot(self):
+        x_idxs = range(len(self.train_losses))
+        plt.plot(x_idxs, self.train_losses, 'b')
+        plt.plot(x_idxs, self.val_losses, 'r')
+        plt.plot(x_idxs, self.val_accs, 'g')
+
+
 class classifier_model(object):
-    def __init__(self,input_tensor, labels, cfg):
+    def __init__(self,input_tensor, labels, dropoutProb, cfg):
         self.input_tensor = input_tensor
         self.labels = labels
         self.cfg = cfg
 
-        # outp = L.conv2(self.input_tensor, 128, size=[1,cfg['knn_K']], stride=(1,1))    # 2048, 1, 128
+        outp = L.conv2(self.input_tensor, dropoutProb, 128, size=[1,cfg['knn_K']], stride=(1,1))    # 2048, 1, 128
 
-        outp = L.conv2(self.input_tensor, 32, size=[1,3], stride=(1,1))    # 2048, 62, 32
-        outp = L.conv2(outp, 32, size=[1,3], stride=(1,1))    # 2048, 60, 32
-        outp = tf.layers.max_pooling2d(outp,[1,2],(1,2))    # 2048, 30, 32
-        outp = L.conv2(outp, 64, size=[1,3], stride=(1,1))    # 2048, 28, 64
-        outp = L.conv2(outp, 64, size=[1,3], stride=(1,1))    # 2048, 26, 64
-        outp = L.conv2(outp, 64, size=[1,3], stride=(1,1))    # 2048, 24, 64
-        outp = tf.layers.max_pooling2d(outp,[1,2],(1,2))    # 2048, 12, 64
-        outp = L.conv2(outp, 128, size=[1,3], stride=(1,1))    # 2048, 10, 128
-        outp = L.conv2(outp, 128, size=[1,3], stride=(1,1))    # 2048, 8, 128
-        outp = L.conv2(outp, 128, size=[1,8], stride=(1,1))    # 2048, 1, 128
+        # outp = L.conv2(self.input_tensor, 32, size=[1,3], stride=(1,1))    # 2048, 126, 32
+        # outp = L.conv2(outp, 32, size=[1,3], stride=(1,1))    # 2048, 124, 32
+        # outp = tf.layers.max_pooling2d(outp,[1,2],(1,2))    # 2048, 62, 32
+        # outp = L.conv2(outp, 64, size=[1,3], stride=(1,1))    # 2048, 60, 64
+        # outp = L.conv2(outp, 64, size=[1,3], stride=(1,1))    # 2048, 58, 64
+        # outp = L.conv2(outp, 64, size=[1,3], stride=(1,1))    # 2048, 56, 64
+        # outp = tf.layers.max_pooling2d(outp,[1,2],(1,2))    # 2048, 28, 64
+        # outp = L.conv2(outp, 64, size=[1,3], stride=(1,1))    # 2048, 26, 64
+        # outp = L.conv2(outp, 64, size=[1,3], stride=(1,1))    # 2048, 24, 64
+        # outp = tf.layers.max_pooling2d(outp,[1,2],(1,2))    # 2048, 12, 64
+        # outp = L.conv2(outp, 128, size=[1,3], stride=(1,1))    # 2048, 10, 128
+        # outp = L.conv2(outp, 128, size=[1,3], stride=(1,1))    # 2048, 8, 128
+        # outp = L.conv2(outp, 128, size=[1,8], stride=(1,1))    # 2048, 1, 128
 
-        outp = L.conv2(outp, 128) # 1024, 1, 128
-        outp = L.conv2(outp, 256) # 512, 1, 256
-        outp = L.conv2(outp, 256) # 256, 1, 256
-        outp = L.conv2(outp, 512) # 128, 1, 512
-        outp = L.conv2(outp, 512) # 64, 1, 512
-        outp = L.conv2(outp, 512) # 32, 1, 512
-        outp = L.conv2(outp, 1024) # 16, 1, 1024
-        outp = L.conv2(outp, 1024) # 8, 1, 1024
+        outp = L.conv2(outp, dropoutProb, 128) # 1024, 1, 128
+        outp = L.conv2(outp, dropoutProb, 256) # 512, 1, 256
+        outp = L.conv2(outp, dropoutProb, 256) # 256, 1, 256
+        outp = L.conv2(outp, dropoutProb, 512) # 128, 1, 512
+        outp = L.conv2(outp, dropoutProb, 512) # 64, 1, 512
+        outp = L.conv2(outp, dropoutProb, 512) # 32, 1, 512
+        outp = L.conv2(outp, dropoutProb, 1024) # 16, 1, 1024
+        outp = L.conv2(outp, dropoutProb, 1024) # 8, 1, 1024
 
         outp = tf.layers.Flatten()(outp)
+        # outp = tf.nn.dropout(tf.layers.dense(outp, 250, activation=tf.nn.relu), dropoutProb)
         outp = tf.layers.dense(outp, 250, activation=tf.nn.relu)
         self.logits = tf.layers.dense(outp, self.cfg['num_classes'])
 
         self.loss = tf.losses.sparse_softmax_cross_entropy(self.labels, self.logits)
         self.preds = tf.argmax(input = self.logits,axis = 1)
-        self.accuracy = tf.metrics.accuracy(labels=self.labels, predictions=self.preds)
+        # self.accuracy = tf.metrics.accuracy(labels=self.labels, predictions=self.preds)
 
 def train_sample_gen(batch_size=32):
     with open(TRAIN_FILE_LIST,'r') as f:
@@ -109,18 +128,27 @@ def eval_sample_gen(batch_size=32):
         yield inp_tensor.astype(np.float32), labels.astype(np.int64)
 
 def train(trn_data_generator, eval_data_generator, cfg):
+    best_acc = 0
+    best_acc_epoch = 0
     x = tf.placeholder(tf.float32, [None,2048,cfg['knn_K'],3])
     y = tf.placeholder(tf.int32, [None])
-    model = classifier_model(x, y, cfg)
+    dropoutProb = tf.placeholder(tf.float32, [])
+    model = classifier_model(x, y, dropoutProb, cfg)
+    train_dat = training_data()
 
-    optimizer = tf.train.AdamOptimizer(5e-5).minimize(model.loss)
+    optimizer = tf.train.AdamOptimizer(1e-4).minimize(model.loss)
     saver = tf.train.Saver(tf.trainable_variables())
 
     with tf.Session() as sess:
         print('Starting training')
         # _, loss = sess.run([optimizer, model.loss], feed_dict=feed_dict)
+
+        
+
         sess.run(tf.global_variables_initializer())
-        sess.run(tf.local_variables_initializer())
+        # sess.run(tf.local_variables_initializer())
+
+
         # if args.load_params:
         #     ckpt_file = os.path.join(args.ckpt_dir, 'mnist_model.ckpt')
         #     print('Restoring parameters from', ckpt_file)
@@ -139,24 +167,50 @@ def train(trn_data_generator, eval_data_generator, cfg):
             train_losses = []  
             for i in range(num_batches):
                 batch = next(trn_data_generator)
-                feed_dict = {x:batch[0], y:batch[1]}
-                _, loss ,_= sess.run([optimizer, model.loss, model.accuracy], feed_dict=feed_dict)
+                feed_dict = {x:batch[0], y:batch[1], dropoutProb: 0.5}
+                _, loss = sess.run([optimizer, model.loss], feed_dict=feed_dict)
                 train_losses.append(loss)
+                # train_dat.train_losses.append(loss)
                 print('Epoch', epoch, 'batch:', i, 'loss:', loss)
             train_loss_mean = np.mean(train_losses)
+            train_dat.train_losses.append(train_loss_mean)
             print('Mean loss:',train_loss_mean)
 
-            eval_accuracies = []
+            eval_preds = []
+            eval_gts = []
             eval_losses = []
+
+            # # tf.reset_default_graph()  
+            # imported_meta = tf.train.import_meta_graph('saved_models/classifier_model.ckpt.meta') 
+            # imported_meta.restore(sess, 'saved_models/classifier_model.ckpt') 
+            # saver.restore(sess, 'saved_models/classifier_model.ckpt')
             for i in range(eval_num_batches):
                 batch = next(eval_data_generator)
-                feed_dict = {x:batch[0], y:batch[1]}
-                loss, acc = sess.run([model.loss, model.accuracy], feed_dict=feed_dict)
+                feed_dict = {x:batch[0], y:batch[1], dropoutProb: 1.0}
+                loss, preds = sess.run([model.loss, model.preds], feed_dict=feed_dict)
+                eval_preds.extend(preds)
+                eval_gts.extend(batch[1])
+                
                 eval_losses.append(loss)
-                eval_accuracies.append(acc)
+                # eval_accuracies.append(acc)
             eval_loss_mean = np.mean(eval_losses)
-            eval_acc_mean = np.mean(eval_accuracies)
-            print('Accuracy:', eval_acc_mean, 'loss:', eval_loss_mean)
+            # eval_acc_mean = np.mean(eval_accuracies)
+            # print(len(eval_gts))
+            # print(len(eval_preds))
+            eval_acc_mean = (np.where(np.array(eval_gts) == np.array(eval_preds))[0]).shape[0]/cfg['size_eval']
+
+            train_dat.val_losses.append(eval_loss_mean)
+            train_dat.val_accs.append(eval_acc_mean)
+            print('Accuracy:', eval_acc_mean, 'loss:', eval_loss_mean)   
+
+            train_dat.plot()
+            plt.savefig('progress.png')
+            if eval_acc_mean > best_acc:
+                print('Improved accuracy. Saving ... ')
+                best_acc = eval_acc_mean
+                best_acc_epoch = epoch
+                saver.save(sess, 'saved_models/classifier_model.ckpt')
+            print('Best acc', best_acc, 'at epoch', best_acc_epoch)
 
 
             # # compute loss over validation data
@@ -174,7 +228,8 @@ def train(trn_data_generator, eval_data_generator, cfg):
             #     saver.save(sess, ckpt_file)
 
         # ckpt_file = os.path.join(args.ckpt_dir, 'mnist_model.ckpt')
-        saver.save(sess, 'classifier_model.ckpt')
+        # saver.save(sess, 'saved_models/classifier_model.ckpt')
+    return train_dat
 
 
     # G = tf.Graph()
@@ -234,4 +289,5 @@ def train(trn_data_generator, eval_data_generator, cfg):
            
 
 if __name__ == '__main__':
-    train(train_sample_gen(CONFIG['batch_size_train']), eval_sample_gen(CONFIG['batch_size_eval']), CONFIG)
+    dat = train(train_sample_gen(CONFIG['batch_size_train']), eval_sample_gen(CONFIG['batch_size_eval']), CONFIG)
+    # dat.plot(CONFIG)

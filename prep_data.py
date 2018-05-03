@@ -3,7 +3,7 @@ import numpy as np
 
 SIZE = 2**11
 KNNS = np.zeros((SIZE,SIZE),dtype=int)
-knn_K = 64
+knn_K = 128
 
 def triangle_area(v1,v2,v3):
     return 0.5 * np.linalg.norm(np.cross(v2-v1, v3-v1),axis = 1)
@@ -119,10 +119,10 @@ if __name__ == '__main__':
     train_models = []
     eval_models = []
 
-    # trainFiles = glob.glob('ModelNet10/*/train/*.off')
-    # for tf in trainFiles:
-    #     train_models.append(process_model(tf))
-    #     print(tf)
+    trainFiles = glob.glob('ModelNet10/*/train/*.off')
+    for tf in trainFiles:
+        train_models.append(process_model(tf))
+        print(tf)
 
     evalFiles = glob.glob('ModelNet10/*/test/*.off')
     for ef in evalFiles:
@@ -136,9 +136,9 @@ if __name__ == '__main__':
     # with open('mn10train.txt','w') as f:
     #     for tm in train_models:
     #         f.write(tm + '\n')
-    with open('mn10eval.txt','w') as f:
-        for em in eval_models:
-            f.write(em + '\n')
+    # with open('mn10eval.txt','w') as f:
+    #     for em in eval_models:
+    #         f.write(em + '\n')
 
 
 
